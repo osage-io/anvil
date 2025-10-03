@@ -186,18 +186,21 @@ jobs:
         # Create archive
         if [[ "${{ matrix.goos }}" == "windows" ]]; then
           zip -r anvil-${{ matrix.suffix }}.zip anvil-${{ matrix.suffix }}-dir/
+          echo "ARCHIVE_FILE=anvil-${{ matrix.suffix }}.zip" >> $GITHUB_ENV
         else
           tar -czf anvil-${{ matrix.suffix }}.tar.gz anvil-${{ matrix.suffix }}-dir/
+          echo "ARCHIVE_FILE=anvil-${{ matrix.suffix }}.tar.gz" >> $GITHUB_ENV
         fi
         
-        # List contents
+        # List contents and confirm archive was created
         ls -la
+        echo "Created archive: $ARCHIVE_FILE"
     
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: anvil-${{ matrix.suffix }}
-        path: dist/*.tar.gz dist/*.zip
+        path: dist/${{ env.ARCHIVE_FILE }}
         retention-days: 7
 
   release:

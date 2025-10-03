@@ -138,9 +138,12 @@ jobs:
           -o dist/anvil-${{ matrix.suffix }}${{ matrix.extension }} \
           cmd/anvil/main.go
         
-        # Verify the binary works
-        if [[ "${{ matrix.goos }}" == "linux" ]]; then
+        # Only test binaries that can run on this platform (linux/amd64)
+        if [[ "${{ matrix.goos }}" == "linux" && "${{ matrix.goarch }}" == "amd64" ]]; then
+          echo "Testing binary compatibility..."
           dist/anvil-${{ matrix.suffix }}${{ matrix.extension }} version
+        else
+          echo "Skipping binary test for ${{ matrix.goos }}/${{ matrix.goarch }} (cross-compiled)"
         fi
     
     - name: Create release archive

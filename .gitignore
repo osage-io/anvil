@@ -57,3 +57,4 @@ qr-codes/
 
 # Temporary files
 benchmark.txt
+gosec-results.json

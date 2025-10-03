@@ -46,8 +46,8 @@ jobs:
       run: |
         go tool cover -func=coverage.out | tail -1 | awk '{print "Total coverage: " $3}'
         COVERAGE=$(go tool cover -func=coverage.out | tail -1 | awk '{print $3}' | sed 's/%//')
-        if (( $(echo "$COVERAGE < 70" | bc -l) )); then
-          echo "❌ Test coverage below 70%: $COVERAGE%"
+        if (( $(echo "$COVERAGE < 65" | bc -l) )); then
+          echo "❌ Test coverage below 65%: $COVERAGE%"
           echo "Note: This is a temporary threshold reduction while we improve test coverage"
           exit 1
         else

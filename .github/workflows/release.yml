@@ -148,11 +148,11 @@ jobs:
         cd dist
         
         # Create a directory with the binary and documentation
-        mkdir -p anvil-${{ matrix.suffix }}
-        cp anvil-${{ matrix.suffix }}${{ matrix.extension }} anvil-${{ matrix.suffix }}/
+        mkdir -p anvil-${{ matrix.suffix }}-dir
+        cp anvil-${{ matrix.suffix }}${{ matrix.extension }} anvil-${{ matrix.suffix }}-dir/
         
         # Add README to archive
-        cat > anvil-${{ matrix.suffix }}/README.txt << 'README_EOF'
+        cat > anvil-${{ matrix.suffix }}-dir/README.txt << 'README_EOF'
         Anvil Cold Wallet Generator ${{ steps.build_info.outputs.version }}
         ============================================================
         
@@ -182,9 +182,9 @@ jobs:
         
         # Create archive
         if [[ "${{ matrix.goos }}" == "windows" ]]; then
-          zip -r anvil-${{ matrix.suffix }}.zip anvil-${{ matrix.suffix }}/
+          zip -r anvil-${{ matrix.suffix }}.zip anvil-${{ matrix.suffix }}-dir/
         else
-          tar -czf anvil-${{ matrix.suffix }}.tar.gz anvil-${{ matrix.suffix }}/
+          tar -czf anvil-${{ matrix.suffix }}.tar.gz anvil-${{ matrix.suffix }}-dir/
         fi
         
         # List contents

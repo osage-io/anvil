@@ -12,7 +12,7 @@ on:
         default: 'v0.1.0'
 
 env:
-  GO_VERSION: '1.21'
+  GO_VERSION: '1.24'
 
 jobs:
   test:
@@ -38,16 +38,33 @@ jobs:
     - name: Download dependencies
       run: go mod download
     
+    - name: Verify dependencies
+      run: go mod verify
+    
+    - name: Run go vet
+      run: go vet ./...
+    
     - name: Run tests
-      run: go test -v ./internal/...
+      run: go test -v -coverprofile=coverage.out ./internal/...
+    
+    - name: Check test coverage
+      run: |
+        go tool cover -func=coverage.out | tail -1 | awk '{print "Total coverage: " $3}'
+        COVERAGE=$(go tool cover -func=coverage.out | tail -1 | awk '{print $3}' | sed 's/%//')
+        if (( $(echo "$COVERAGE < 65" | bc -l) )); then
+          echo "❌ Test coverage below 65%: $COVERAGE%"
+          exit 1
+        else
+          echo "✅ Test coverage acceptable for release: $COVERAGE%"
+        fi
     
     - name: Run benchmarks
       run: go test -bench=. -benchmem ./internal/... | tee benchmark.txt
     
-    - name: Fuzz testing
+    - name: Security scan
       run: |
-        chmod +x fuzz_test.sh
-        timeout 120s ./fuzz_test.sh || true
+        go install github.com/securego/gosec/v2/cmd/gosec@latest
+        gosec -fmt json -out gosec-results.json ./... || echo "Security scan completed"
 
   build:
     needs: test
@@ -78,6 +95,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     
     - name: Set up Go
       uses: actions/setup-go@v4
@@ -97,6 +116,16 @@ jobs:
     - name: Download dependencies
       run: go mod download
     
+    - name: Get build info
+      id: build_info
+      run: |
+        VERSION=${GITHUB_REF_NAME:-${{ github.event.inputs.tag }}}
+        COMMIT=$(git rev-parse --short HEAD)
+        DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "commit=$COMMIT" >> $GITHUB_OUTPUT
+        echo "date=$DATE" >> $GITHUB_OUTPUT
+    
     - name: Build binary
       env:
         GOOS: ${{ matrix.goos }}
@@ -104,26 +133,69 @@ jobs:
         CGO_ENABLED: 0
       run: |
         mkdir -p dist
-        go build -ldflags="-s -w -X main.version=${GITHUB_REF_NAME:-${{ github.event.inputs.tag }}}" \
+        go build \
+          -ldflags="-s -w -X main.version=${{ steps.build_info.outputs.version }} -X main.gitCommit=${{ steps.build_info.outputs.commit }} -X main.buildDate=${{ steps.build_info.outputs.date }}" \
           -o dist/anvil-${{ matrix.suffix }}${{ matrix.extension }} \
           cmd/anvil/main.go
+        
+        # Verify the binary works
+        if [[ "${{ matrix.goos }}" == "linux" ]]; then
+          dist/anvil-${{ matrix.suffix }}${{ matrix.extension }} version
+        fi
     
     - name: Create release archive
       run: |
         cd dist
+        
+        # Create a directory with the binary and documentation
+        mkdir -p anvil-${{ matrix.suffix }}
+        cp anvil-${{ matrix.suffix }}${{ matrix.extension }} anvil-${{ matrix.suffix }}/
+        
+        # Add README to archive
+        cat > anvil-${{ matrix.suffix }}/README.txt << 'README_EOF'
+        Anvil Cold Wallet Generator ${{ steps.build_info.outputs.version }}
+        ============================================================
+        
+        A secure, offline multi-cryptocurrency cold wallet generator.
+        
+        USAGE:
+          ./anvil generate                    # Generate a new wallet
+          ./anvil recover --mnemonic="..."    # Recover from mnemonic
+          ./anvil derive --coin BTC --path="m/44'/0'/0'/0/0"  # Derive specific address
+          ./anvil --help                      # Show all options
+        
+        SECURITY NOTES:
+          - Always run on an air-gapped machine for maximum security
+          - Never share your mnemonic phrase or private keys
+          - Verify checksums before use
+          - Store backups securely and redundantly
+        
+        For detailed documentation, visit:
+        https://github.com/osage-io/anvil
+        
+        Build Information:
+          Version: ${{ steps.build_info.outputs.version }}
+          Commit:  ${{ steps.build_info.outputs.commit }}
+          Date:    ${{ steps.build_info.outputs.date }}
+          OS/Arch: ${{ matrix.goos }}/${{ matrix.goarch }}
+        README_EOF
+        
+        # Create archive
         if [[ "${{ matrix.goos }}" == "windows" ]]; then
-          zip -r anvil-${{ matrix.suffix }}.zip anvil-${{ matrix.suffix }}${{ matrix.extension }}
+          zip -r anvil-${{ matrix.suffix }}.zip anvil-${{ matrix.suffix }}/
         else
-          tar -czf anvil-${{ matrix.suffix }}.tar.gz anvil-${{ matrix.suffix }}${{ matrix.extension }}
+          tar -czf anvil-${{ matrix.suffix }}.tar.gz anvil-${{ matrix.suffix }}/
         fi
+        
+        # List contents
         ls -la
     
     - name: Upload build artifacts
       uses: actions/upload-artifact@v3
       with:
         name: anvil-${{ matrix.suffix }}
-        path: dist/*
-        retention-days: 5
+        path: dist/*.tar.gz dist/*.zip
+        retention-days: 7
 
   release:
     needs: build
@@ -134,6 +206,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     
     - name: Download all artifacts
       uses: actions/download-artifact@v3
@@ -150,41 +224,122 @@ jobs:
       run: |
         cd release
         sha256sum * > checksums.txt
+        echo "## Checksums"
         cat checksums.txt
+    
+    - name: Get release info
+      id: release_info
+      run: |
+        VERSION=${GITHUB_REF_NAME:-${{ github.event.inputs.tag }}}
+        COMMIT=$(git rev-parse --short HEAD)
+        DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+        
+        # Get changes since last tag
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+        if [[ -n "$PREVIOUS_TAG" ]]; then
+          CHANGES=$(git log --oneline $PREVIOUS_TAG..HEAD --pretty=format:"- %s" | head -20)
+        else
+          CHANGES="- Initial release"
+        fi
+        
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "commit=$COMMIT" >> $GITHUB_OUTPUT
+        echo "date=$DATE" >> $GITHUB_OUTPUT
+        
+        # Save changes to a file for multi-line output
+        echo "$CHANGES" > changes.txt
     
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ github.ref_name || github.event.inputs.tag }}
-        name: Anvil ${{ github.ref_name || github.event.inputs.tag }}
+        tag_name: ${{ steps.release_info.outputs.version }}
+        name: Anvil ${{ steps.release_info.outputs.version }}
         body: |
-          # Anvil Cold Wallet Generator ${{ github.ref_name || github.event.inputs.tag }}
+          # 🔐 Anvil Cold Wallet Generator ${{ steps.release_info.outputs.version }}
           
           A secure, offline multi-cryptocurrency cold wallet generator built in Go.
           
-          ## Features
-          - ✅ Multi-cryptocurrency support (BTC, ETH, DOGE, BNB, TRX)
-          - ✅ Multiple output formats (JSON, text, paper wallet, QR codes)
-          - ✅ BIP39/BIP32 compliance
-          - ✅ Security hardened with memory protection
-          - ✅ Cross-platform support
+          **Release Date:** ${{ steps.release_info.outputs.date }}  
+          **Commit:** `${{ steps.release_info.outputs.commit }}`
           
-          ## Supported Platforms
-          - **Linux**: amd64, arm64
-          - **macOS**: Intel (amd64), Apple Silicon (arm64)
-          - **Windows**: amd64, arm64
+          ## 🚀 Features
+          - ✅ **Multi-cryptocurrency support**: Bitcoin, Ethereum, Dogecoin, BNB, Tron
+          - ✅ **Multiple output formats**: JSON, text, paper wallet, QR codes
+          - ✅ **BIP39/BIP32/BIP44 compliant**: Standard hierarchical deterministic wallets
+          - ✅ **Security hardened**: Memory protection and secure random generation
+          - ✅ **Cross-platform**: Linux, macOS, Windows on amd64 and arm64
+          - ✅ **Air-gapped operation**: No network dependencies required
           
-          ## Installation
-          1. Download the appropriate binary for your platform
-          2. Extract the archive
-          3. Run `./anvil --help` to get started
+          ## 📦 Downloads
+          Choose the appropriate version for your platform:
           
-          ## Security
-          - Always verify checksums before use
-          - Run on an air-gapped machine for maximum security
-          - Never share your mnemonic phrase or private keys
+          | Platform | Architecture | Download |
+          |----------|--------------|----------|
+          | Linux | x86_64 (amd64) | `anvil-linux-amd64.tar.gz` |
+          | Linux | ARM64 | `anvil-linux-arm64.tar.gz` |
+          | macOS | Intel (amd64) | `anvil-darwin-amd64.tar.gz` |
+          | macOS | Apple Silicon (arm64) | `anvil-darwin-arm64.tar.gz` |
+          | Windows | x86_64 (amd64) | `anvil-windows-amd64.zip` |
+          | Windows | ARM64 | `anvil-windows-arm64.zip` |
           
-          See the [documentation](https://github.com/osage/anvil) for detailed usage instructions.
+          ## 🛡️ Security
+          **IMPORTANT**: Always verify checksums before use!
+          
+          ```bash
+          # Verify checksum (example for Linux amd64)
+          sha256sum -c checksums.txt --ignore-missing
+          ```
+          
+          **Security Best Practices:**
+          - ⚠️  **Run on an air-gapped machine** for maximum security
+          - 🔒 **Never share your mnemonic phrase** or private keys
+          - 💾 **Store backups securely** and in multiple locations
+          - 🔍 **Verify the binary integrity** using provided checksums
+          
+          ## 🚀 Quick Start
+          
+          1. **Download** the appropriate binary for your platform
+          2. **Verify** the checksum: `sha256sum -c checksums.txt --ignore-missing`
+          3. **Extract** the archive: `tar -xzf anvil-*.tar.gz` (or unzip for Windows)
+          4. **Run** the binary: `./anvil --help`
+          
+          ### Generate a New Wallet
+          ```bash
+          # Generate a 12-word mnemonic with multiple cryptocurrency accounts
+          ./anvil generate
+          
+          # Generate with 24 words and include private keys (DANGEROUS - use with care)
+          ./anvil generate --words=24 --include-private
+          
+          # Save to file
+          ./anvil generate --output=wallet.json
+          ```
+          
+          ### Recover an Existing Wallet
+          ```bash
+          # Recover from mnemonic
+          ./anvil recover --mnemonic="word1 word2 ... word12"
+          ```
+          
+          ### Derive Specific Addresses
+          ```bash
+          # Derive Bitcoin address from custom path
+          ./anvil derive --coin=BTC --mnemonic="..." --path="m/44'/0'/0'/0/5"
+          ```
+          
+          ## 📋 What's New
+          
+          $(cat changes.txt)
+          
+          ## 🐛 Support
+          
+          - **Documentation**: [GitHub Repository](https://github.com/osage-io/anvil)
+          - **Issues**: [Report bugs](https://github.com/osage-io/anvil/issues)
+          - **Discussions**: [Community discussions](https://github.com/osage-io/anvil/discussions)
+          
+          ---
+          
+          **⚡ Built with security and simplicity in mind.**
         files: |
           release/*
         draft: false

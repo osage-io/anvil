@@ -2,21 +2,39 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"runtime"
+	"time"
 
-
+	"anvil/internal/bitcoin"
 	"anvil/internal/crypto"
-	"anvil/pkg/wallet"
+	"anvil/internal/ethereum"
+	"anvil/internal/output"
+	"anvil/internal/tron"
+	"anvil/pkg/types"
 	"github.com/spf13/cobra"
 )
 
-const version = "0.1.0"
-
 var (
-	version = "dev" // Set via build flags
+	version   = "dev" // Set via build flags
 	buildDate = "unknown"
 	gitCommit = "unknown"
+)
+
+// CLI flag variables
+var (
+	mnemonic        string
+	words           int
+	passphrase      string
+	coinType        string
+	path            string
+	outputFile      string
+	includePrivate  bool
+	includeMnemonic bool
+	format          string
+	paper           bool
+	qrCodes         bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -53,7 +71,7 @@ accounts for multiple cryptocurrencies.`,
 	},
 }
 
-// deriveCmd represents the derive command  
+// deriveCmd represents the derive command
 var deriveCmd = &cobra.Command{
 	Use:   "derive",
 	Short: "Derive a specific account from a mnemonic",
@@ -238,6 +256,7 @@ func outputWallet(wallet *types.Wallet) error {
 	generator := output.NewGenerator(options)
 	return generator.GenerateWallet(wallet)
 }
+
 func wordsToEntropyBits(words int) int {
 	switch words {
 	case 12:
@@ -299,7 +318,6 @@ func getCoinInstance(coinType string) types.Coin {
 	}
 }
 
-
 func init() {
 	// Initialize secure runtime on startup
 	crypto.InitSecureRuntime()
@@ -313,18 +331,12 @@ func init() {
 		fmt.Fprintf(os.Stderr, "\n")
 	}
 }
+
 func main() {
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}
 }
-
-// Additional CLI flags for output formatting
-var (
-	version = "dev" // Set via build flags
-	buildDate = "unknown"
-	gitCommit = "unknown"
-)
 
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{

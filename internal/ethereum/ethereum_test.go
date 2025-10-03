@@ -40,7 +40,7 @@ func TestEthereumAddressGeneration(t *testing.T) {
 
 			// Create Ethereum coin instance
 			eth := NewEthereum()
-			
+
 			// Derive account
 			account, err := eth.DeriveAccount(seed, tv.path)
 			if err != nil {
@@ -49,7 +49,7 @@ func TestEthereumAddressGeneration(t *testing.T) {
 
 			// Check expected address (case-insensitive comparison)
 			if !strings.EqualFold(account.Address, tv.expected) {
-				t.Errorf("Address mismatch for %s:\nExpected: %s\nActual:   %s", 
+				t.Errorf("Address mismatch for %s:\nExpected: %s\nActual:   %s",
 					tv.path, tv.expected, account.Address)
 			}
 
@@ -112,36 +112,36 @@ func TestBinanceCoinAddressGeneration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to derive ETH account: %v", err)
 	}
-	
+
 	if !strings.EqualFold(account.Address, ethAccount.Address) {
-		t.Errorf("BNB and ETH addresses should be the same for same path:\nBNB: %s\nETH: %s", 
+		t.Errorf("BNB and ETH addresses should be the same for same path:\nBNB: %s\nETH: %s",
 			account.Address, ethAccount.Address)
 	}
 }
 
 func TestEthereumAddressValidation(t *testing.T) {
 	eth := NewEthereum()
-	
+
 	validAddresses := []string{
 		"0x9858EfFD232B4033E47d90003D41EC34EcaEda94", // Checksummed
 		"0x9858effd232b4033e47d90003d41ec34ecaeda94", // Lowercase
 		"0x9858EFFD232B4033E47D90003D41EC34ECAEDA94", // Uppercase
 	}
-	
+
 	for _, addr := range validAddresses {
 		if !eth.ValidateAddress(addr) {
 			t.Errorf("Valid address rejected: %s", addr)
 		}
 	}
-	
+
 	invalidAddresses := []string{
-		"9858effd232b4033e47d90003d41ec34ecaeda94", // Missing 0x
-		"0x9858effd232b4033e47d90003d41ec34ecaeda9",  // Too short
+		"9858effd232b4033e47d90003d41ec34ecaeda94",    // Missing 0x
+		"0x9858effd232b4033e47d90003d41ec34ecaeda9",   // Too short
 		"0x9858effd232b4033e47d90003d41ec34ecaeda944", // Too long
-		"0x9858effd232b4033e47d90003d41ec34ecaeda9g", // Invalid hex
-		"0x9858EfFd232b4033E47d90003D41EC34eCAeDA95", // Wrong checksum
+		"0x9858effd232b4033e47d90003d41ec34ecaeda9g",  // Invalid hex
+		"0x9858EfFd232b4033E47d90003D41EC34eCAeDA95",  // Wrong checksum
 	}
-	
+
 	for _, addr := range invalidAddresses {
 		if eth.ValidateAddress(addr) {
 			t.Errorf("Invalid address accepted: %s", addr)
@@ -151,7 +151,7 @@ func TestEthereumAddressValidation(t *testing.T) {
 
 func TestEIP55Checksum(t *testing.T) {
 	eth := NewEthereum()
-	
+
 	testCases := []struct {
 		input    string
 		expected string
@@ -165,11 +165,11 @@ func TestEIP55Checksum(t *testing.T) {
 			expected: "0x6Fac4D18c912343BF86fa7049364Dd4E424Ab9C0",
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		result := eth.toChecksumAddress(tc.input)
 		if result != tc.expected {
-			t.Errorf("Checksum mismatch:\nInput:    %s\nExpected: %s\nActual:   %s", 
+			t.Errorf("Checksum mismatch:\nInput:    %s\nExpected: %s\nActual:   %s",
 				tc.input, tc.expected, result)
 		}
 	}
@@ -178,11 +178,11 @@ func TestEIP55Checksum(t *testing.T) {
 func TestEthereumStandardPaths(t *testing.T) {
 	eth := NewEthereum()
 	paths := eth.GetStandardDerivationPaths()
-	
+
 	expectedPaths := []string{
-		"m/44'/60'/0'/0/0",  // BIP44 standard path
-		"m/44'/60'/0'/0/1",  // Second address
-		"m/44'/60'/1'/0/0",  // Change addresses
+		"m/44'/60'/0'/0/0", // BIP44 standard path
+		"m/44'/60'/0'/0/1", // Second address
+		"m/44'/60'/1'/0/0", // Change addresses
 	}
 
 	if len(paths) != len(expectedPaths) {
@@ -206,12 +206,12 @@ func TestCoinTypes(t *testing.T) {
 	if bnb.GetCoinType() != 60 {
 		t.Errorf("BNB coin type should be 60 (same as Ethereum), got %d", bnb.GetCoinType())
 	}
-	
+
 	// Test chain IDs
 	if eth.GetChainID() != 1 {
 		t.Errorf("Ethereum chain ID should be 1, got %d", eth.GetChainID())
 	}
-	
+
 	if bnb.GetChainID() != 56 {
 		t.Errorf("BNB Smart Chain ID should be 56, got %d", bnb.GetChainID())
 	}
@@ -222,7 +222,7 @@ func BenchmarkEthereumAddressGeneration(b *testing.B) {
 	mnemonic := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
 	seed, _ := crypto.MnemonicToSeed(mnemonic, "")
 	defer crypto.SecureZeroMemory(seed)
-	
+
 	eth := NewEthereum()
 	path := "m/44'/60'/0'/0/0"
 

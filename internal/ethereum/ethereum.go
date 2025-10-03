@@ -34,9 +34,9 @@ func NewEthereum() *EthereumCoin {
 func NewBinanceCoin() *EthereumCoin {
 	return &EthereumCoin{
 		name:     "BNB Smart Chain",
-		symbol:   "BNB", 
-		coinType: 60,  // Uses same coin type as Ethereum
-		chainID:  56,  // BSC Mainnet
+		symbol:   "BNB",
+		coinType: 60, // Uses same coin type as Ethereum
+		chainID:  56, // BSC Mainnet
 	}
 }
 
@@ -57,22 +57,22 @@ func (e *EthereumCoin) DeriveAccount(seed []byte, path string) (types.Account, e
 	if err != nil {
 		return types.Account{}, fmt.Errorf("failed to derive key: %w", err)
 	}
-	
+
 	// Get the private key bytes
 	privateKeyBytes := key.Key
-	
+
 	// Create ECDSA private key from bytes
 	privateKey, err := ethcrypto.ToECDSA(privateKeyBytes)
 	if err != nil {
 		return types.Account{}, fmt.Errorf("failed to create ECDSA key: %w", err)
 	}
-	
+
 	// Get uncompressed public key bytes (65 bytes)
 	publicKeyBytes := ethcrypto.FromECDSAPub(&privateKey.PublicKey)
-	
+
 	// Generate Ethereum address from public key
 	address := e.publicKeyToAddress(publicKeyBytes)
-	
+
 	account := types.Account{
 		Path:       path,
 		PrivateKey: privateKeyBytes,
@@ -81,10 +81,10 @@ func (e *EthereumCoin) DeriveAccount(seed []byte, path string) (types.Account, e
 		Symbol:     e.symbol,
 		CreatedAt:  time.Now(),
 	}
-	
+
 	// Clear sensitive key data
 	crypto.SecureZeroMemory(privateKeyBytes)
-	
+
 	return account, nil
 }
 
@@ -94,34 +94,33 @@ func (e *EthereumCoin) publicKeyToAddress(publicKeyBytes []byte) string {
 	if len(publicKeyBytes) == 65 && publicKeyBytes[0] == 0x04 {
 		publicKeyBytes = publicKeyBytes[1:]
 	}
-	
+
 	// Hash the public key with Keccak256
 	hash := ethcrypto.Keccak256Hash(publicKeyBytes)
-	
+
 	// Take the last 20 bytes as the address
 	address := common.BytesToAddress(hash[12:])
-	
+
 	// Return checksummed address (EIP-55)
 	return e.toChecksumAddress(address.Hex())
 }
-
 
 // ValidateAddress checks if an address is a valid Ethereum address
 func (e *EthereumCoin) ValidateAddress(address string) bool {
 	if !strings.HasPrefix(address, "0x") {
 		return false
 	}
-	
+
 	// Check if it's a valid hex address
 	if !common.IsHexAddress(address) {
 		return false
 	}
-	
+
 	// If it has mixed case, verify EIP-55 checksum
 	if e.hasMixedCase(address) {
 		return e.isValidChecksum(address)
 	}
-	
+
 	return true
 }
 
@@ -130,7 +129,7 @@ func (e *EthereumCoin) hasMixedCase(address string) bool {
 	address = strings.TrimPrefix(address, "0x")
 	hasUpper := false
 	hasLower := false
-	
+
 	for _, char := range address {
 		if char >= 'A' && char <= 'F' {
 			hasUpper = true
@@ -138,7 +137,7 @@ func (e *EthereumCoin) hasMixedCase(address string) bool {
 			hasLower = true
 		}
 	}
-	
+
 	return hasUpper && hasLower
 }
 
@@ -151,13 +150,13 @@ func (e *EthereumCoin) isValidChecksum(address string) bool {
 func (e *EthereumCoin) GetStandardDerivationPaths() []string {
 	coinType := e.coinType
 	return []string{
-		fmt.Sprintf("m/44'/%d'/0'/0/0", coinType),  // BIP44 standard path
-		fmt.Sprintf("m/44'/%d'/0'/0/1", coinType),  // Second address
-		fmt.Sprintf("m/44'/%d'/1'/0/0", coinType),  // Change addresses
+		fmt.Sprintf("m/44'/%d'/0'/0/0", coinType), // BIP44 standard path
+		fmt.Sprintf("m/44'/%d'/0'/0/1", coinType), // Second address
+		fmt.Sprintf("m/44'/%d'/1'/0/0", coinType), // Change addresses
 	}
 }
 
-// GetCoinType returns the BIP44 coin type for this cryptocurrency  
+// GetCoinType returns the BIP44 coin type for this cryptocurrency
 func (e *EthereumCoin) GetCoinType() uint32 {
 	return e.coinType
 }
@@ -171,10 +170,10 @@ func (e *EthereumCoin) GetChainID() uint64 {
 func (e *EthereumCoin) toChecksumAddress(address string) string {
 	address = strings.ToLower(strings.TrimPrefix(address, "0x"))
 	hash := ethcrypto.Keccak256Hash([]byte(address))
-	
+
 	result := "0x"
 	hashHex := hex.EncodeToString(hash[:])
-	
+
 	for i, char := range address {
 		if char >= '0' && char <= '9' {
 			result += string(char)
@@ -187,6 +186,6 @@ func (e *EthereumCoin) toChecksumAddress(address string) string {
 			}
 		}
 	}
-	
+
 	return result
 }

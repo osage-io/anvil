@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+set -e
+
+echo "🚀 Running pre-push checks..."
+
+# Use the existing pre-push-test.sh script if it exists
+if [ -f "./pre-push-test.sh" ]; then
+    echo "  • Running comprehensive test suite (pre-push-test.sh)..."
+    chmod +x ./pre-push-test.sh
+    if ! ./pre-push-test.sh; then
+        echo "❌ Pre-push test suite failed"
+        exit 1
+    fi
+    echo "✅ All pre-push checks passed!"
+else
+    # Fallback to manual comprehensive testing
+    echo "  • Running comprehensive Go tests..."
+    
+    # Build check
+    echo "    - Testing build..."
+    if ! go build -o anvil-test cmd/anvil/main.go; then
+        echo "❌ Build failed"
+        exit 1
+    fi
+    rm -f anvil-test
+    echo "      ✅ Build successful"
+    
+    # Full test suite with race detection and coverage
+    echo "    - Running full test suite with race detection..."
+    if ! go test -race -coverprofile=coverage.out ./internal/...; then
+        echo "❌ Tests failed"
+        exit 1
+    fi
+    echo "      ✅ All tests passed"
+    
+    # Check coverage
+    if [ -f "coverage.out" ]; then
+        COVERAGE=$(go tool cover -func=coverage.out | tail -1 | awk '{print $3}' | sed 's/%//')
+        echo "    - Test coverage: ${COVERAGE}%"
+        if (( $(echo "$COVERAGE < 70" | bc -l) )); then
+            echo "❌ Test coverage below 70%: ${COVERAGE}%"
+            exit 1
+        fi
+        rm coverage.out
+    fi
+    
+    # Cross-compilation test
+    echo "    - Testing cross-compilation..."
+    PLATFORMS=("linux/amd64" "darwin/amd64" "windows/amd64")
+    for platform in "${PLATFORMS[@]}"; do
+        GOOS=${platform%/*}
+        GOARCH=${platform#*/}
+        echo "      - Building for $GOOS/$GOARCH..."
+        
+        EXTENSION=""
+        if [ "$GOOS" = "windows" ]; then
+            EXTENSION=".exe"
+        fi
+        
+        if ! env GOOS=$GOOS GOARCH=$GOARCH CGO_ENABLED=0 go build \
+            -o anvil-test-$GOOS-$GOARCH$EXTENSION \
+            cmd/anvil/main.go; then
+            echo "❌ $platform build failed"
+            exit 1
+        fi
+        rm -f anvil-test-$GOOS-$GOARCH$EXTENSION
+    done
+    echo "      ✅ Cross-compilation successful"
+    
+    echo "✅ All pre-push checks passed!"
+fi

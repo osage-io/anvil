@@ -45,7 +45,7 @@ func (g *Generator) GenerateWallet(wallet *types.Wallet) error {
 func (g *Generator) generateJSON(wallet *types.Wallet) error {
 	var data []byte
 	var err error
-	
+
 	if g.options.IncludePrivate || g.options.IncludeMnemonic {
 		// Include sensitive data
 		sensitive := struct {
@@ -57,19 +57,19 @@ func (g *Generator) generateJSON(wallet *types.Wallet) error {
 			IncludesPrivateKeys: g.options.IncludePrivate,
 			IncludesMnemonic:    g.options.IncludeMnemonic,
 		}
-		
+
 		if !g.options.IncludeMnemonic {
 			sensitive.Wallet.Mnemonic = ""
 			sensitive.Wallet.Seed = nil
 		}
-		
+
 		if !g.options.IncludePrivate {
 			// Clear private keys from accounts
 			for i := range sensitive.Wallet.Accounts {
 				sensitive.Wallet.Accounts[i].PrivateKey = nil
 			}
 		}
-		
+
 		data, err = json.MarshalIndent(sensitive, "", "  ")
 	} else {
 		// Safe JSON without sensitive data
@@ -81,11 +81,11 @@ func (g *Generator) generateJSON(wallet *types.Wallet) error {
 			data, err = json.MarshalIndent(prettyJSON, "", "  ")
 		}
 	}
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to marshal JSON: %w", err)
 	}
-	
+
 	return g.writeOutput(data, "json")
 }
 
@@ -118,12 +118,12 @@ SUPPORTED CRYPTOCURRENCIES:
 • Store multiple backups in secure locations
 • Verify addresses before sending funds
 `
-	
+
 	t, err := template.New("wallet").Parse(tmpl)
 	if err != nil {
 		return fmt.Errorf("failed to parse template: %w", err)
 	}
-	
+
 	data := struct {
 		*types.Wallet
 		IncludeMnemonic bool
@@ -133,12 +133,12 @@ SUPPORTED CRYPTOCURRENCIES:
 		IncludeMnemonic: g.options.IncludeMnemonic,
 		IncludePrivate:  g.options.IncludePrivate,
 	}
-	
+
 	var buf strings.Builder
 	if err := t.Execute(&buf, data); err != nil {
 		return fmt.Errorf("failed to execute template: %w", err)
 	}
-	
+
 	return g.writeOutput([]byte(buf.String()), "txt")
 }
 
@@ -181,7 +181,7 @@ Generated: {{.CreatedAt.Format "January 2, 2006 at 15:04:05"}}
 	if err != nil {
 		return fmt.Errorf("failed to parse template: %w", err)
 	}
-	
+
 	data := struct {
 		*types.Wallet
 		IncludeMnemonic bool
@@ -191,12 +191,12 @@ Generated: {{.CreatedAt.Format "January 2, 2006 at 15:04:05"}}
 		IncludeMnemonic: g.options.IncludeMnemonic,
 		IncludePrivate:  g.options.IncludePrivate,
 	}
-	
+
 	var buf strings.Builder
 	if err := t.Execute(&buf, data); err != nil {
 		return fmt.Errorf("failed to execute template: %w", err)
 	}
-	
+
 	return g.writeOutput([]byte(buf.String()), "txt")
 }
 
@@ -206,17 +206,17 @@ func (g *Generator) generateQRCodes(wallet *types.Wallet) error {
 	if baseDir == "" {
 		baseDir = "anvil-qr-codes"
 	}
-	
+
 	// Remove extension if present
 	if ext := filepath.Ext(baseDir); ext != "" {
 		baseDir = strings.TrimSuffix(baseDir, ext)
 	}
-	
+
 	// Create directory
 	if err := os.MkdirAll(baseDir, 0755); err != nil {
 		return fmt.Errorf("failed to create QR codes directory: %w", err)
 	}
-	
+
 	// Generate mnemonic QR code if requested
 	if g.options.IncludeMnemonic && wallet.Mnemonic != "" {
 		qrFile := filepath.Join(baseDir, "mnemonic.png")
@@ -225,18 +225,18 @@ func (g *Generator) generateQRCodes(wallet *types.Wallet) error {
 		}
 		fmt.Printf("Generated mnemonic QR code: %s\n", qrFile)
 	}
-	
+
 	// Generate QR codes for each account
 	for _, account := range wallet.Accounts {
-		prefix := fmt.Sprintf("%s-%s", strings.ToLower(account.Symbol), 
+		prefix := fmt.Sprintf("%s-%s", strings.ToLower(account.Symbol),
 			strings.ReplaceAll(account.Path, "/", "-")[2:]) // Remove m/ prefix
-		
+
 		// Address QR code
 		addrFile := filepath.Join(baseDir, prefix+"-address.png")
 		if err := qrcode.WriteFile(account.Address, qrcode.Medium, 256, addrFile); err != nil {
 			return fmt.Errorf("failed to generate address QR code: %w", err)
 		}
-		
+
 		// Private key QR code if requested
 		if g.options.IncludePrivate && len(account.PrivateKey) > 0 {
 			privFile := filepath.Join(baseDir, prefix+"-private.png")
@@ -245,10 +245,10 @@ func (g *Generator) generateQRCodes(wallet *types.Wallet) error {
 				return fmt.Errorf("failed to generate private key QR code: %w", err)
 			}
 		}
-		
+
 		fmt.Printf("Generated QR codes for %s %s\n", account.Symbol, account.Address)
 	}
-	
+
 	// Generate info file
 	infoFile := filepath.Join(baseDir, "README.txt")
 	info := fmt.Sprintf(`ANVIL QR CODES
@@ -262,16 +262,16 @@ FILES:
 	if g.options.IncludeMnemonic {
 		info += "• mnemonic.png - Your BIP39 recovery phrase (KEEP SECURE!)\n"
 	}
-	
+
 	for _, account := range wallet.Accounts {
-		prefix := fmt.Sprintf("%s-%s", strings.ToLower(account.Symbol), 
+		prefix := fmt.Sprintf("%s-%s", strings.ToLower(account.Symbol),
 			strings.ReplaceAll(account.Path, "/", "-")[2:])
 		info += fmt.Sprintf("• %s-address.png - %s address: %s\n", prefix, account.Symbol, account.Address)
 		if g.options.IncludePrivate {
 			info += fmt.Sprintf("• %s-private.png - %s private key (KEEP SECURE!)\n", prefix, account.Symbol)
 		}
 	}
-	
+
 	info += `
 SECURITY WARNINGS:
 • QR codes containing private keys or mnemonic phrases are extremely sensitive
@@ -280,11 +280,11 @@ SECURITY WARNINGS:
 • Never share or upload these files online
 • Make backup copies on separate secure media
 `
-	
+
 	if err := os.WriteFile(infoFile, []byte(info), 0644); err != nil {
 		return fmt.Errorf("failed to write info file: %w", err)
 	}
-	
+
 	fmt.Printf("QR codes saved to directory: %s\n", baseDir)
 	return nil
 }
@@ -296,13 +296,13 @@ func (g *Generator) writeOutput(data []byte, defaultExt string) error {
 		fmt.Print(string(data))
 		return nil
 	}
-	
+
 	// Ensure file has proper extension
 	filePath := g.options.FilePath
 	if filepath.Ext(filePath) == "" {
 		filePath += "." + defaultExt
 	}
-	
+
 	return os.WriteFile(filePath, data, 0644)
 }
 
@@ -312,11 +312,11 @@ func ValidateOptions(options types.OutputOptions) error {
 	if options.IncludePrivate {
 		fmt.Fprintf(os.Stderr, "⚠️  WARNING: Output will include private keys! Ensure secure handling.\n")
 	}
-	
+
 	if options.IncludeMnemonic {
 		fmt.Fprintf(os.Stderr, "⚠️  WARNING: Output will include mnemonic phrase! Ensure secure handling.\n")
 	}
-	
+
 	// Check file path for QR codes
 	if options.Format == types.OutputQR && options.FilePath != "" {
 		// Ensure directory exists or can be created
@@ -327,6 +327,6 @@ func ValidateOptions(options types.OutputOptions) error {
 			}
 		}
 	}
-	
+
 	return nil
 }

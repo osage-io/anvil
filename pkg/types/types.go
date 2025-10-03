@@ -25,28 +25,28 @@ type Account struct {
 
 // Wallet holds the master seed and derived accounts
 type Wallet struct {
-	Mnemonic    string              `json:"mnemonic,omitempty"`    // Omit unless requested
-	Seed        []byte              `json:"seed,omitempty"`        // Omit unless requested
-	Accounts    []Account           `json:"accounts"`
-	CoinTypes   map[string][]uint32 `json:"coin_types"`  // Maps symbol to BIP44 coin types
-	CreatedAt   time.Time           `json:"created_at"`
-	Version     string              `json:"version"`
+	Mnemonic  string              `json:"mnemonic,omitempty"` // Omit unless requested
+	Seed      []byte              `json:"seed,omitempty"`     // Omit unless requested
+	Accounts  []Account           `json:"accounts"`
+	CoinTypes map[string][]uint32 `json:"coin_types"` // Maps symbol to BIP44 coin types
+	CreatedAt time.Time           `json:"created_at"`
+	Version   string              `json:"version"`
 }
 
 // MarshalSafeJSON returns JSON without sensitive fields
 func (w *Wallet) MarshalSafeJSON() ([]byte, error) {
 	safe := struct {
-		Accounts  []SafeAccount `json:"accounts"`
+		Accounts  []SafeAccount       `json:"accounts"`
 		CoinTypes map[string][]uint32 `json:"coin_types"`
-		CreatedAt time.Time `json:"created_at"`
-		Version   string    `json:"version"`
+		CreatedAt time.Time           `json:"created_at"`
+		Version   string              `json:"version"`
 	}{
 		Accounts:  make([]SafeAccount, len(w.Accounts)),
 		CoinTypes: w.CoinTypes,
 		CreatedAt: w.CreatedAt,
 		Version:   w.Version,
 	}
-	
+
 	for i, acc := range w.Accounts {
 		safe.Accounts[i] = SafeAccount{
 			Path:      acc.Path,
@@ -56,7 +56,7 @@ func (w *Wallet) MarshalSafeJSON() ([]byte, error) {
 			CreatedAt: acc.CreatedAt,
 		}
 	}
-	
+
 	return json.Marshal(safe)
 }
 
@@ -71,11 +71,11 @@ type SafeAccount struct {
 
 // DerivationPath represents a BIP32/BIP44 derivation path
 type DerivationPath struct {
-	Purpose   uint32 `json:"purpose"`   // Usually 44, 49, or 84
-	CoinType  uint32 `json:"coin_type"` // BIP44 registered coin type
-	Account   uint32 `json:"account"`   // Account index
-	Change    uint32 `json:"change"`    // 0 for external, 1 for internal
-	Index     uint32 `json:"index"`     // Address index
+	Purpose  uint32 `json:"purpose"`   // Usually 44, 49, or 84
+	CoinType uint32 `json:"coin_type"` // BIP44 registered coin type
+	Account  uint32 `json:"account"`   // Account index
+	Change   uint32 `json:"change"`    // 0 for external, 1 for internal
+	Index    uint32 `json:"index"`     // Address index
 }
 
 // String returns the string representation of the derivation path
@@ -102,8 +102,8 @@ const (
 // OutputOptions controls what information is included in output
 type OutputOptions struct {
 	Format          OutputFormat `json:"format"`
-	IncludePrivate  bool        `json:"include_private"`
-	IncludeMnemonic bool        `json:"include_mnemonic"`
-	IncludeQR       bool        `json:"include_qr"`
-	FilePath        string      `json:"file_path,omitempty"`
+	IncludePrivate  bool         `json:"include_private"`
+	IncludeMnemonic bool         `json:"include_mnemonic"`
+	IncludeQR       bool         `json:"include_qr"`
+	FilePath        string       `json:"file_path,omitempty"`
 }

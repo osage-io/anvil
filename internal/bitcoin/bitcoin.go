@@ -35,9 +35,9 @@ func NewDogecoin() *BitcoinCoin {
 	dogecoinParams := chaincfg.MainNetParams
 	dogecoinParams.Name = "dogecoin"
 	dogecoinParams.Net = 0xc0c0c0c0
-	dogecoinParams.PubKeyHashAddrID = 0x1E  // Dogecoin addresses start with 'D'
-	dogecoinParams.ScriptHashAddrID = 0x16  // P2SH addresses start with '9' or 'A'
-	
+	dogecoinParams.PubKeyHashAddrID = 0x1E // Dogecoin addresses start with 'D'
+	dogecoinParams.ScriptHashAddrID = 0x16 // P2SH addresses start with '9' or 'A'
+
 	return &BitcoinCoin{
 		name:      "Dogecoin",
 		symbol:    "DOGE",
@@ -63,20 +63,20 @@ func (b *BitcoinCoin) DeriveAccount(seed []byte, path string) (types.Account, er
 	if err != nil {
 		return types.Account{}, fmt.Errorf("failed to derive key: %w", err)
 	}
-	
+
 	// Get the private key bytes
 	privateKeyBytes := key.Key
-	
+
 	// Create ECDSA private key from bytes
 	privateKey, publicKey := btcec.PrivKeyFromBytes(privateKeyBytes)
 	publicKeyBytes := publicKey.SerializeCompressed()
-	
+
 	// Generate address from public key
 	address, err := b.publicKeyToAddress(publicKeyBytes)
 	if err != nil {
 		return types.Account{}, fmt.Errorf("failed to generate address: %w", err)
 	}
-	
+
 	account := types.Account{
 		Path:       path,
 		PrivateKey: privateKey.Serialize(),
@@ -85,10 +85,10 @@ func (b *BitcoinCoin) DeriveAccount(seed []byte, path string) (types.Account, er
 		Symbol:     b.symbol,
 		CreatedAt:  time.Now(),
 	}
-	
+
 	// Clear sensitive key data
 	crypto.SecureZeroMemory(privateKeyBytes)
-	
+
 	return account, nil
 }
 
@@ -100,7 +100,7 @@ func (b *BitcoinCoin) publicKeyToAddress(publicKeyBytes []byte) (string, error) 
 	if err != nil {
 		return "", fmt.Errorf("failed to create address: %w", err)
 	}
-	
+
 	return addr.EncodeAddress(), nil
 }
 
@@ -124,9 +124,9 @@ func (b *BitcoinCoin) ValidateAddress(address string) bool {
 func (b *BitcoinCoin) GetStandardDerivationPaths() []string {
 	coinType := b.coinType
 	return []string{
-		fmt.Sprintf("m/44'/%d'/0'/0/0", coinType),  // BIP44 (Legacy)
-		fmt.Sprintf("m/49'/%d'/0'/0/0", coinType),  // BIP49 (P2SH-P2WPKH)
-		fmt.Sprintf("m/84'/%d'/0'/0/0", coinType),  // BIP84 (Native SegWit)
+		fmt.Sprintf("m/44'/%d'/0'/0/0", coinType), // BIP44 (Legacy)
+		fmt.Sprintf("m/49'/%d'/0'/0/0", coinType), // BIP49 (P2SH-P2WPKH)
+		fmt.Sprintf("m/84'/%d'/0'/0/0", coinType), // BIP84 (Native SegWit)
 	}
 }
 

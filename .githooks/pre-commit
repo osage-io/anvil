@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+set -e
+
+echo "🔍 Running pre-commit checks..."
+
+# Check if we're in a Go project
+if [ ! -f "go.mod" ]; then
+    echo "❌ Not a Go project (no go.mod found)"
+    exit 1
+fi
+
+# 1. Format check
+echo "  • Checking Go formatting..."
+UNFORMATTED=$(gofmt -l .)
+if [ -n "$UNFORMATTED" ]; then
+    echo "❌ The following files need formatting:"
+    echo "$UNFORMATTED"
+    echo "Run: gofmt -w ."
+    exit 1
+fi
+echo "    ✅ Code is properly formatted"
+
+# 2. Go vet
+echo "  • Running go vet..."
+if ! go vet ./...; then
+    echo "❌ go vet failed"
+    exit 1
+fi
+echo "    ✅ go vet passed"
+
+# 3. golangci-lint (if available)
+if command -v golangci-lint > /dev/null; then
+    echo "  • Running golangci-lint..."
+    if ! golangci-lint run --timeout=2m; then
+        echo "❌ golangci-lint failed"
+        exit 1
+    fi
+    echo "    ✅ golangci-lint passed"
+else
+    echo "    ⚠️  golangci-lint not found, skipping (consider installing: https://golangci-lint.run/usage/install/)"
+fi
+
+# 4. Fast unit tests (short tests only)
+echo "  • Running fast unit tests..."
+if ! go test -short -race ./internal/...; then
+    echo "❌ Fast unit tests failed"
+    exit 1
+fi
+echo "    ✅ Fast unit tests passed"
+
+echo "✅ All pre-commit checks passed!"

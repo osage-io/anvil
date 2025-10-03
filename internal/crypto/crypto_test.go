@@ -68,10 +68,10 @@ func TestMnemonicValidation(t *testing.T) {
 	}
 
 	invalidMnemonics := []string{
-		"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon", // Too short
+		"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon",         // Too short
 		"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon invalid", // Invalid word
 		"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon", // Invalid checksum
-		"", // Empty
+		"",     // Empty
 		"word", // Single word
 	}
 
@@ -85,7 +85,7 @@ func TestMnemonicValidation(t *testing.T) {
 
 func TestMnemonicWithPassphrase(t *testing.T) {
 	mnemonic := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
-	
+
 	// Same mnemonic with different passphrases should produce different seeds
 	seed1, err := MnemonicToSeed(mnemonic, "")
 	if err != nil {
@@ -184,7 +184,7 @@ func TestDerivationPathParsing(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.path, func(t *testing.T) {
 			result, err := ParseDerivationPath(tc.path)
-			
+
 			if tc.valid {
 				if err != nil {
 					t.Errorf("Valid path rejected: %s, error: %v", tc.path, err)
@@ -192,7 +192,7 @@ func TestDerivationPathParsing(t *testing.T) {
 					if result != tc.expected {
 						t.Errorf("Path parsing mismatch:\nExpected: %+v\nActual:   %+v", tc.expected, result)
 					}
-					
+
 					// Test string representation
 					stringResult := result.String()
 					if stringResult != tc.path {
@@ -284,7 +284,7 @@ func TestSecureZeroMemory(t *testing.T) {
 
 func TestSecureRandom(t *testing.T) {
 	sizes := []int{16, 32, 64, 128}
-	
+
 	for _, size := range sizes {
 		t.Run(fmt.Sprintf("size_%d", size), func(t *testing.T) {
 			data1, err := SecureRandom(size)
@@ -321,7 +321,7 @@ func TestSecureRandom(t *testing.T) {
 // Test invalid entropy sizes
 func TestInvalidEntropySizes(t *testing.T) {
 	invalidSizes := []int{64, 96, 300, 0, -1}
-	
+
 	for _, size := range invalidSizes {
 		t.Run(fmt.Sprintf("invalid_%d", size), func(t *testing.T) {
 			_, err := GenerateMnemonic(size)
@@ -355,7 +355,7 @@ func BenchmarkMnemonicGeneration256(b *testing.B) {
 
 func BenchmarkMnemonicToSeed(b *testing.B) {
 	mnemonic := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		seed, err := MnemonicToSeed(mnemonic, "")
@@ -371,7 +371,7 @@ func BenchmarkKeyDerivation(b *testing.B) {
 	seed, _ := MnemonicToSeed(mnemonic, "")
 	defer SecureZeroMemory(seed)
 	path := "m/44'/0'/0'/0/0"
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := DeriveKey(seed, path)
@@ -383,7 +383,7 @@ func BenchmarkKeyDerivation(b *testing.B) {
 
 func BenchmarkSecureZeroMemory(b *testing.B) {
 	data := make([]byte, 1024) // 1KB
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		// Reinitialize data for each iteration

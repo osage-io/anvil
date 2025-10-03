@@ -52,7 +52,7 @@ func TestBitcoinAddressGeneration(t *testing.T) {
 
 			// Create Bitcoin coin instance
 			btc := NewBitcoin()
-			
+
 			// Derive account
 			account, err := btc.DeriveAccount(seed, tv.path)
 			if err != nil {
@@ -62,7 +62,7 @@ func TestBitcoinAddressGeneration(t *testing.T) {
 			// Check expected address
 			expectedAddr := tv.expected["BTC"]
 			if account.Address != expectedAddr {
-				t.Errorf("Address mismatch for %s:\nExpected: %s\nActual:   %s", 
+				t.Errorf("Address mismatch for %s:\nExpected: %s\nActual:   %s",
 					tv.path, expectedAddr, account.Address)
 			}
 
@@ -117,7 +117,7 @@ func TestDogecoinAddressGeneration(t *testing.T) {
 
 func TestBitcoinWIF(t *testing.T) {
 	btc := NewBitcoin()
-	
+
 	// Test with known private key
 	privateKeyHex := "0000000000000000000000000000000000000000000000000000000000000001"
 	privateKeyBytes, err := hex.DecodeString(privateKeyHex)
@@ -144,11 +144,11 @@ func TestBitcoinWIF(t *testing.T) {
 func TestBitcoinStandardPaths(t *testing.T) {
 	btc := NewBitcoin()
 	paths := btc.GetStandardDerivationPaths()
-	
+
 	expectedPaths := []string{
-		"m/44'/0'/0'/0/0",  // BIP44 Legacy
-		"m/49'/0'/0'/0/0",  // BIP49 P2SH-P2WPKH
-		"m/84'/0'/0'/0/0",  // BIP84 Native SegWit
+		"m/44'/0'/0'/0/0", // BIP44 Legacy
+		"m/49'/0'/0'/0/0", // BIP49 P2SH-P2WPKH
+		"m/84'/0'/0'/0/0", // BIP84 Native SegWit
 	}
 
 	if len(paths) != len(expectedPaths) {
@@ -179,7 +179,7 @@ func BenchmarkBitcoinAddressGeneration(b *testing.B) {
 	mnemonic := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
 	seed, _ := crypto.MnemonicToSeed(mnemonic, "")
 	defer crypto.SecureZeroMemory(seed)
-	
+
 	btc := NewBitcoin()
 	path := "m/44'/0'/0'/0/0"
 

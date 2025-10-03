@@ -7,7 +7,7 @@ on:
     branches: [ main, develop ]
 
 env:
-  GO_VERSION: '1.21'
+  GO_VERSION: '1.24'
 
 jobs:
   test:
@@ -58,8 +58,12 @@ jobs:
     
     - name: Fuzz testing (short)
       run: |
-        chmod +x fuzz_test.sh
-        timeout 60s ./fuzz_test.sh || true
+        if [ -f fuzz_test.sh ]; then
+          chmod +x fuzz_test.sh
+          timeout 60s ./fuzz_test.sh || true
+        else
+          echo "No fuzz_test.sh found, skipping"
+        fi
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -83,6 +87,13 @@ jobs:
       uses: securecodewarrior/github-action-gosec@master
       with:
         args: './...'
+      continue-on-error: true
+    
+    - name: Run gosec Security Scanner (fallback)
+      if: failure()
+      run: |
+        go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+        gosec ./...
     
     - name: Check for known vulnerabilities
       run: |

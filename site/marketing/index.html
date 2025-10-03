@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anvil 🔨 - Secure Multi-Crypto Cold Wallet Generator</title>
+    <meta name="description" content="Generate secure, offline cryptocurrency wallets for Bitcoin, Ethereum, Dogecoin, BNB, and TRON. Industry-standard BIP39/BIP44 with air-gap security.">
+    <meta name="keywords" content="cryptocurrency, wallet, bitcoin, ethereum, cold storage, offline, security, BIP39, BIP44">
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --primary-dark: #1d4ed8;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--gray-800);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header .subtitle {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .cta-buttons {
+            margin-top: 2rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: white;
+            color: var(--primary-blue);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .btn-secondary:hover {
+            background: white;
+            color: var(--primary-blue);
+        }
+        
+        .features {
+            padding: 80px 0;
+            background: var(--gray-50);
+        }
+        
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: var(--gray-900);
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+        
+        .feature-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--gray-900);
+        }
+        
+        .supported-coins {
+            padding: 80px 0;
+            background: white;
+        }
+        
+        .coin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .coin-card {
+            text-align: center;
+            padding: 2rem;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .coin-card:hover {
+            border-color: var(--primary-blue);
+            transform: translateY(-2px);
+        }
+        
+        .coin-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .quick-start {
+            padding: 80px 0;
+            background: var(--gray-900);
+            color: white;
+        }
+        
+        .code-block {
+            background: #000;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+        
+        .security-section {
+            padding: 80px 0;
+            background: var(--gray-50);
+        }
+        
+        .security-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .security-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .security-check {
+            color: #10b981;
+            font-size: 1.5rem;
+            margin-top: 0.25rem;
+        }
+        
+        .footer {
+            background: var(--gray-900);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+        }
+        
+        .footer-links a:hover {
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .feature-grid,
+            .coin-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1>Anvil 🔨</h1>
+            <p class="subtitle">Secure, Offline Multi-Cryptocurrency Cold Wallet Generator</p>
+            <p>Generate HD wallets for Bitcoin, Ethereum, Dogecoin, BNB, and TRON with military-grade security</p>
+            
+            <div class="cta-buttons">
+                <a href="#installation" class="btn btn-primary">Get Started</a>
+                <a href="https://github.com/yourorg/anvil" class="btn btn-secondary">View on GitHub</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="features">
+        <div class="container">
+            <h2>Why Choose Anvil?</h2>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Air-Gap Security</h3>
+                    <p>Completely offline operation with no network dependencies. Generate wallets on air-gapped systems for maximum security.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🪙</div>
+                    <h3>Multi-Coin Support</h3>
+                    <p>Single mnemonic generates wallets for Bitcoin, Ethereum, Dogecoin, BNB Smart Chain, and TRON with standard derivation paths.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Industry Standards</h3>
+                    <p>Full BIP39, BIP32, and BIP44 compliance. Compatible with all major wallet software and hardware devices.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🛡️</div>
+                    <h3>Memory Safety</h3>
+                    <p>Automatic clearing of sensitive data from memory. Private keys are never written to disk unless explicitly requested.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Multiple Formats</h3>
+                    <p>Export as JSON, generate QR codes, or create paper wallets. Choose the format that works best for your needs.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🔧</div>
+                    <h3>Developer Friendly</h3>
+                    <p>Clean CLI interface, comprehensive documentation, and open-source codebase. Easy to integrate and customize.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="supported-coins">
+        <div class="container">
+            <h2>Supported Cryptocurrencies</h2>
+            
+            <div class="coin-grid">
+                <div class="coin-card">
+                    <div class="coin-icon">₿</div>
+                    <h3>Bitcoin</h3>
+                    <p>Legacy, P2SH-P2WPKH, and Native SegWit addresses</p>
+                </div>
+                
+                <div class="coin-card">
+                    <div class="coin-icon">♦</div>
+                    <h3>Ethereum</h3>
+                    <p>EIP-55 checksummed addresses</p>
+                </div>
+                
+                <div class="coin-card">
+                    <div class="coin-icon">🐕</div>
+                    <h3>Dogecoin</h3>
+                    <p>Much secure, very offline</p>
+                </div>
+                
+                <div class="coin-card">
+                    <div class="coin-icon">🟡</div>
+                    <h3>BNB Smart Chain</h3>
+                    <p>Binance Smart Chain compatible</p>
+                </div>
+                
+                <div class="coin-card">
+                    <div class="coin-icon">🔴</div>
+                    <h3>TRON</h3>
+                    <p>High-performance blockchain</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="installation" class="quick-start">
+        <div class="container">
+            <h2>Quick Start</h2>
+            
+            <h3>Installation</h3>
+            <div class="code-block">
+# Install via Go (recommended)
+go install github.com/yourorg/anvil/cmd/anvil@latest
+
+# Or build from source
+git clone https://github.com/yourorg/anvil.git
+cd anvil
+go build -o anvil ./cmd/anvil
+            </div>
+            
+            <h3>Generate Your First Wallet</h3>
+            <div class="code-block">
+# Generate with 12-word mnemonic
+anvil generate
+
+# Generate with 24-word mnemonic (more secure)
+anvil generate --words 24
+
+# Save to file
+anvil generate --words 24 --output my-wallet.json
+            </div>
+            
+            <h3>Recover from Existing Mnemonic</h3>
+            <div class="code-block">
+anvil recover --mnemonic "your twelve word mnemonic phrase goes here like this example"
+            </div>
+        </div>
+    </section>
+
+    <section class="security-section">
+        <div class="container">
+            <h2>Security Features</h2>
+            
+            <div class="security-grid">
+                <div class="security-item">
+                    <div class="security-check">✅</div>
+                    <div>
+                        <h4>Offline Operation</h4>
+                        <p>No network connectivity required or used</p>
+                    </div>
+                </div>
+                
+                <div class="security-item">
+                    <div class="security-check">✅</div>
+                    <div>
+                        <h4>Memory Safety</h4>
+                        <p>Sensitive data cleared after use</p>
+                    </div>
+                </div>
+                
+                <div class="security-item">
+                    <div class="security-check">✅</div>
+                    <div>
+                        <h4>Industry Standards</h4>
+                        <p>BIP39, BIP32, BIP44 compliant</p>
+                    </div>
+                </div>
+                
+                <div class="security-item">
+                    <div class="security-check">✅</div>
+                    <div>
+                        <h4>Safe Defaults</h4>
+                        <p>Private keys excluded from output</p>
+                    </div>
+                </div>
+                
+                <div class="security-item">
+                    <div class="security-check">✅</div>
+                    <div>
+                        <h4>Cross-Platform</h4>
+                        <p>Works on Linux, macOS, Windows</p>
+                    </div>
+                </div>
+                
+                <div class="security-item">
+                    <div class="security-check">✅</div>
+                    <div>
+                        <h4>Open Source</h4>
+                        <p>Auditable codebase on GitHub</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="https://github.com/yourorg/anvil">GitHub</a>
+                <a href="/docs">Documentation</a>
+                <a href="/docs/security">Security</a>
+                <a href="https://github.com/yourorg/anvil/releases">Releases</a>
+                <a href="https://github.com/yourorg/anvil/issues">Support</a>
+            </div>
+            
+            <p>&copy; 2023 Anvil. Released under the MIT License.</p>
+            <p><strong>⚠️ Security Notice:</strong> Always verify checksums and use on air-gapped systems for high-value wallets.</p>
+        </div>
+    </footer>
+</body>
+</html>

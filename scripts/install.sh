@@ -3,7 +3,7 @@
 # Anvil Installation Script
 # Automatically downloads and installs the latest release for your platform
 
-set -exuo pipefail
+#set -exuo pipefail
 
 # Configuration
 REPO="osage-io/anvil"

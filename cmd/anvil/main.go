@@ -102,7 +102,7 @@ func init() {
 	generateCmd.Flags().StringVar(&passphrase, "passphrase", "", "Optional passphrase for seed derivation")
 	generateCmd.Flags().StringVarP(&outputFile, "output", "o", "", "Output file for wallet data (default: stdout)")
 	generateCmd.Flags().BoolVar(&includePrivate, "include-private", false, "Include private keys in output (DANGEROUS)")
-	generateCmd.Flags().BoolVar(&includeMnemonic, "include-mnemonic", false, "Include mnemonic phrase in output (DANGEROUS)")
+	generateCmd.Flags().BoolVar(&includeMnemonic, "include-mnemonic", true, "Include mnemonic phrase in output (DANGEROUS)")
 	generateCmd.Flags().StringVar(&format, "format", "json", "Output format: json, text, paper, qr")
 	generateCmd.Flags().BoolVar(&paper, "paper", false, "Generate paper wallet format")
 	generateCmd.Flags().BoolVar(&qrCodes, "qr", false, "Generate QR codes")

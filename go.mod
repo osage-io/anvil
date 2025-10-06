@@ -1,7 +1,8 @@
 module anvil
 
-go 1.21
+go 1.24.0
 
+toolchain go1.24.7
 
 require (
 	github.com/blocto/solana-go-sdk v1.30.0

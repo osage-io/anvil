@@ -42,6 +42,9 @@ go install github.com/yourorg/anvil@latest
 # Generate a new wallet
 anvil generate
 
+# Generate 24-word wallet and save to file
+anvil generate --words 24 --output ~/crypto/test_wallet.json
+
 # Generate with custom options
 anvil generate --words 24 --paper --out wallet.json
 

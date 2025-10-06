@@ -102,7 +102,7 @@ func init() {
 	generateCmd.Flags().StringVar(&passphrase, "passphrase", "", "Optional passphrase for seed derivation")
 	generateCmd.Flags().StringVarP(&outputFile, "output", "o", "", "Output file for wallet data (default: stdout)")
 	generateCmd.Flags().BoolVar(&includePrivate, "include-private", false, "Include private keys in output (DANGEROUS)")
-	generateCmd.Flags().BoolVar(&includeMnemonic, "include-mnemonic", true, "Include mnemonic phrase in output (DANGEROUS)")
+	generateCmd.Flags().BoolVar(&includeMnemonic, "include-mnemonic", false, "Include mnemonic phrase in output (DANGEROUS)")
 	generateCmd.Flags().StringVar(&format, "format", "json", "Output format: json, text, paper, qr")
 	generateCmd.Flags().BoolVar(&paper, "paper", false, "Generate paper wallet format")
 	generateCmd.Flags().BoolVar(&qrCodes, "qr", false, "Generate QR codes")
@@ -218,13 +218,27 @@ func deriveAccount(mnemonic, coinType, path string) error {
 }
 
 func outputWallet(wallet *types.Wallet) error {
+	// Always display mnemonic to console with warning
+	if wallet.Mnemonic != "" {
+		fmt.Fprintf(os.Stderr, "\n🔐 IMPORTANT: Write down your mnemonic phrase and store it securely!\n")
+		fmt.Fprintf(os.Stderr, "════════════════════════════════════════════════════════════════\n")
+		fmt.Fprintf(os.Stderr, "MNEMONIC PHRASE: %s\n", wallet.Mnemonic)
+		fmt.Fprintf(os.Stderr, "════════════════════════════════════════════════════════════════\n")
+		fmt.Fprintf(os.Stderr, "• Keep this phrase secure and offline\n")
+		fmt.Fprintf(os.Stderr, "• Anyone with this phrase can access your funds\n")
+		fmt.Fprintf(os.Stderr, "• Make multiple secure backups\n")
+	}
+
 	// Determine output format
 	outputFormat := types.OutputJSON
+	fileMnemonicInclude := false // Default to false for security
+	
 	if paper {
 		outputFormat = types.OutputPaper
-		includeMnemonic = true // Paper wallets should include mnemonic
+		fileMnemonicInclude = true // Paper wallets should include mnemonic
 	} else if qrCodes {
 		outputFormat = types.OutputQR
+		fileMnemonicInclude = includeMnemonic // QR codes use flag value
 	} else {
 		switch format {
 		case "json":
@@ -233,11 +247,35 @@ func outputWallet(wallet *types.Wallet) error {
 			outputFormat = types.OutputText
 		case "paper":
 			outputFormat = types.OutputPaper
-			includeMnemonic = true
+			fileMnemonicInclude = true
 		case "qr":
 			outputFormat = types.OutputQR
+			fileMnemonicInclude = includeMnemonic
 		default:
 			return fmt.Errorf("unsupported format: %s", format)
+		}
+	}
+
+	// Handle include-mnemonic flag: if explicitly set, honor it
+	if includeMnemonic {
+		fileMnemonicInclude = true
+	}
+
+	// For console output (no file), always exclude mnemonic from JSON since we display it separately
+	if outputFile == "" {
+		fileMnemonicInclude = false
+	}
+
+	// Update the console message based on file behavior
+	if wallet.Mnemonic != "" {
+		if outputFile != "" {
+			if fileMnemonicInclude {
+				fmt.Fprintf(os.Stderr, "• This phrase WILL be saved to the output file\n\n")
+			} else {
+				fmt.Fprintf(os.Stderr, "• This phrase will NOT be saved to the output file\n\n")
+			}
+		} else {
+			fmt.Fprintf(os.Stderr, "\n")
 		}
 	}
 
@@ -245,7 +283,7 @@ func outputWallet(wallet *types.Wallet) error {
 	options := types.OutputOptions{
 		Format:          outputFormat,
 		IncludePrivate:  includePrivate,
-		IncludeMnemonic: includeMnemonic,
+		IncludeMnemonic: fileMnemonicInclude,
 		FilePath:        outputFile,
 	}
 

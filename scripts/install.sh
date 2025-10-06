@@ -3,7 +3,7 @@
 # Anvil Installation Script
 # Automatically downloads and installs the latest release for your platform
 
-set -euo pipefail
+set -exuo pipefail
 
 # Configuration
 REPO="osage-io/anvil"
@@ -171,7 +171,7 @@ extract_archive() {
     
     case "$archive" in
         *.tar.gz|*.tgz)
-            tar -xzf "$archive" -C "$dest_dir"
+            tar -xvzf "$archive" -C "$dest_dir"
             ;;
         *.zip)
             if command_exists unzip; then
@@ -214,7 +214,7 @@ install_anvil() {
     log "Latest version: $version"
     
     # Construct download URL and archive name
-    archive_name="anvil-${version}-${platform}"
+    archive_name="anvil-${platform}"
     
     # Determine archive extension
     if [[ "$platform" == windows-* ]]; then
@@ -272,9 +272,9 @@ install_anvil() {
     # Find the binary in extracted files
     local binary_path
     if [[ "$platform" == windows-* ]]; then
-        binary_path=$(find "$temp_dir" -name "${BINARY_NAME}.exe" | head -1)
+        binary_path=$(find "$temp_dir" -name "*anvil*.exe" | head -1)
     else
-        binary_path=$(find "$temp_dir" -name "$BINARY_NAME" -type f | head -1)
+        binary_path=$(find "$temp_dir" -name "*anvil*" -type f ! -name "*.tar.gz" ! -name "*.zip" | head -1)
     fi
     
     if [[ -z "$binary_path" ]]; then

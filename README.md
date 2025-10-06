@@ -38,6 +38,7 @@ anvil generate --words 24 --paper --out wallet.json
 anvil recover --mnemonic "your twelve word seed phrase here..."
 
 # Derive specific addresses
+anvil derive --coin SOL --path "m/44'/501'/0'/0'"
 anvil derive --coin BTC --path "m/84'/0'/0'/0/0"
 ```
 
@@ -48,6 +49,7 @@ anvil derive --coin BTC --path "m/84'/0'/0'/0/0"
 - Binance Coin (BNB)
 - Dogecoin (DOGE)
 - TRON (TRX)
+- Solana (SOL)
 - More coming soon...
 
 ## License

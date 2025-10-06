@@ -11,6 +11,7 @@ import (
 	"anvil/internal/crypto"
 	"anvil/internal/ethereum"
 	"anvil/internal/output"
+	"anvil/internal/solana"
 	"anvil/internal/tron"
 	"anvil/pkg/types"
 	"github.com/spf13/cobra"
@@ -113,7 +114,7 @@ func init() {
 
 	// Derive command flags
 	deriveCmd.Flags().StringVar(&mnemonic, "mnemonic", "", "BIP39 mnemonic phrase")
-	deriveCmd.Flags().StringVar(&coinType, "coin", "", "Coin type (BTC, ETH, DOGE, BNB)")
+	deriveCmd.Flags().StringVar(&coinType, "coin", "", "Coin type (BTC, ETH, DOGE, BNB, TRX, SOL)")
 	deriveCmd.Flags().StringVar(&path, "path", "", "Derivation path (e.g., m/44'/0'/0'/0/0)")
 	deriveCmd.Flags().StringVar(&passphrase, "passphrase", "", "Optional passphrase for seed derivation")
 	deriveCmd.Flags().BoolVar(&includePrivate, "include-private", false, "Include private keys in output (DANGEROUS)")
@@ -167,6 +168,7 @@ func createWalletFromMnemonic(mnemonic, passphrase string) error {
 		bitcoin.NewDogecoin(),
 		ethereum.NewBinanceCoin(),
 		tron.NewTron(),
+		solana.NewSolana(),
 	}
 
 	// Generate accounts for each coin
@@ -282,6 +284,8 @@ func getStandardPaths(coin types.Coin) []string {
 		return c.GetStandardDerivationPaths()
 	case *tron.TronCoin:
 		return c.GetStandardDerivationPaths()
+	case *solana.SolanaCoin:
+		return c.GetStandardDerivationPaths()
 	default:
 		// Default to BIP44 path
 		return []string{"m/44'/0'/0'/0/0"}
@@ -295,6 +299,8 @@ func getCoinType(coin types.Coin) uint32 {
 	case *ethereum.EthereumCoin:
 		return c.GetCoinType()
 	case *tron.TronCoin:
+		return c.GetCoinType()
+	case *solana.SolanaCoin:
 		return c.GetCoinType()
 	default:
 		return 0
@@ -313,6 +319,8 @@ func getCoinInstance(coinType string) types.Coin {
 		return ethereum.NewBinanceCoin()
 	case "TRX":
 		return tron.NewTron()
+	case "SOL":
+		return solana.NewSolana()
 	default:
 		return nil
 	}

@@ -234,10 +234,11 @@ install_anvil() {
     
     # Cleanup function
     cleanup() {
-        debug "Cleaning up temporary files..."
-        rm -rf "$temp_dir"
+        if [[ -n "${temp_dir:-}" ]]; then
+            debug "Cleaning up temporary files..."
+            rm -rf "$temp_dir"
+        fi
     }
-    trap cleanup EXIT
     
     # Download the release archive
     local archive_path="$temp_dir/$archive_name"

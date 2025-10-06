@@ -21,6 +21,17 @@ Anvil is designed for maximum security:
 
 ## Installation
 
+### Quick Install (Recommended)
+
+```bash
+# Install latest release
+curl -fsSL https://raw.githubusercontent.com/osage-io/anvil/main/scripts/install.sh | bash
+```
+
+This will automatically download and install the latest release to `~/bin`.
+
+### Manual Installation
+
 ```bash
 go install github.com/yourorg/anvil@latest
 ```
